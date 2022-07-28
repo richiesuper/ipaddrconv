@@ -77,7 +77,7 @@ main(int argc, char *argv[])
 
 	if (argc != 3)
 	{
-		fprintf(stderr, "Only got %d out of 2 arguments!\n\n", argc - 1);
+		fprintf(stderr, "Got %d instead of 2 arguments!\n\n", argc - 1);
 		fprintf(stderr, USAGE, argv[0]);
 
 		return 1 << 0;
