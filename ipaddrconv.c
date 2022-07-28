@@ -9,7 +9,6 @@
 #include <string.h>
 
 #define IPV4ARRSZ 16 /* we need only 16 bytes (xxx.xxx.xxx.xxx + NULL) */
-#define ROUNDS 4 /* the number of octets we need to compute */
 #define USAGE \
 	"Usage: %s <FLAG> <ARG>\n" \
 	"WARNING: WRONG ARGUMENTS WILL MAKE THE PROGRAM BEHAVE INCORRECTLY!\n" \
@@ -36,14 +35,14 @@ inet_aton(char ipv4[])
 	unsigned cluster = 1 << 24; /* ipv4 cluster size (multiplied with octets) */
 	char *ptr; /* pointer to strtok's tokenized chunks */
 
-	ptr = strtok(ipv4, ".");
+	ptr = strtok(ipv4, "."); /* get first token */
 
 	while (ptr != NULL)
 	{
-		octet = strtoul(ptr, NULL, 0);
-		addr += octet * cluster;
-		cluster >>= 8;
-		ptr = strtok(NULL, ".");
+		octet = strtoul(ptr, NULL, 0); /* compute octet from token */
+		addr += octet * cluster; /* compute the addr so far */
+		cluster >>= 8; /* shift the cluster bit 8 bits to the right */
+		ptr = strtok(NULL, "."); /* get next token */
 	}
 
 	return addr;
