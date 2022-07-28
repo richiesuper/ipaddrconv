@@ -1,6 +1,7 @@
 /**
- * Made by Richie Seputro
- * on July 28, 2022
+ * See LICENSE for license details.
+ *
+ * ipaddrconv - convert string form IPv4 adresses to unsigned int and vice versa
  */
 #include <ctype.h>
 #include <stdio.h>
