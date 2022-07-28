@@ -9,6 +9,7 @@
 #include <string.h>
 
 #define IPV4ARRSZ 16 /* we need only 16 bytes (xxx.xxx.xxx.xxx + NULL) */
+#define ROUNDS 4 /* the number of octets we need to compute */
 #define USAGE \
 	"Usage: %s <FLAG> <ARG>\n" \
 	"WARNING: WRONG ARGUMENTS WILL MAKE THE PROGRAM BEHAVE INCORRECTLY!\n" \
@@ -51,19 +52,22 @@ inet_aton(char ipv4[])
 void
 inet_ntoa(unsigned addr, char ipv4[])
 {
-	unsigned divisor = 1 << 24; /* the divisor for addr */
-	unsigned char octet; /* the computed octet */
+	unsigned char idx; /* current octet count */
+	unsigned char octet[4]; /* the computed octets */
 	unsigned char offset = 0; /* this is for sprintf's 1st arg */
 
-	while (addr > 0) /* while addr is positive..., do */
+	for (idx = 0; idx < ROUNDS; ++idx)
 	{
-		octet = addr / divisor; /* compute the octet */
+		octet[ROUNDS - idx - 1] = addr; /* get rightmost 8 bits by truncation */
+		addr >>= 8;
+	}
+
+	for (idx = 0; idx < ROUNDS; ++idx)
+	{
 		/* put the octet into array, then add sprintf's retval to offset */
-		offset += sprintf(ipv4 + offset, "%u", octet);
-		ipv4[offset] = '.'; /* put a dot on the array */
-		++offset; /* increment the offset as we already added a dot */
-		addr -= octet * divisor; /* subtract (octet * divisor) from addr */
-		divisor >>= 8; /* shift the divisor bit 8 bits to the right */
+		offset += sprintf(ipv4 + offset, "%u", octet[idx]);
+		ipv4[offset] = '.';
+		++offset;
 	}
 
 	ipv4[offset - 1] = '\0'; /* replace the last dot with a null terminator */
