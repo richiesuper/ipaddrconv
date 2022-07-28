@@ -9,6 +9,7 @@
 #include <string.h>
 
 #define IPV4ARRSZ 16 /* we need only 16 bytes (xxx.xxx.xxx.xxx + NULL) */
+#define ROUNDS 4 /* the number of octets we need to compute */
 #define USAGE \
 	"Usage: %s <FLAG> <ARG>\n" \
 	"WARNING: WRONG ARGUMENTS WILL MAKE THE PROGRAM BEHAVE INCORRECTLY!\n" \
@@ -24,52 +25,46 @@
 	".........................in decimal (no prefix)   or\n" \
 	".........................in hexadecimal (prefix with 0x)\n"
 
+int inet_aton(char ipv4[]); /* read as "inet address to number" */
+void inet_ntoa(unsigned addr, char ipv4[]); /* read as inet number to address */
 
 int
-ipv4_to_uint(char ipv4[])
+inet_aton(char ipv4[])
 {
-	unsigned char idx; /* the index for ipv4 array */
-	unsigned char octet = 0; /* the octet (those numbers separated with dots) */
+	unsigned char octet; /* the octet (those numbers separated with dots) */
 	unsigned addr = 0; /* the unsigned integer form of ipv4 */
 	unsigned cluster = 1 << 24; /* ipv4 cluster size (multiplied with octets) */
+	char *ptr; /* pointer to strtok's tokenized chunks */
 
+	ptr = strtok(ipv4, ".");
 
-	for (idx = 0; ipv4[idx] != '\0'; ++idx)
+	while (ptr != NULL)
 	{
-		if (ipv4[idx] == '.') /* if we found a dot */
-		{
-			addr = addr + octet * cluster; /* compute the address so far */
-			cluster /= 1 << 8; /* divide the cluster by 2^8 */
-			octet = 0; /* reset the octet value */
-		}
-		else
-		{
-			octet = octet * 10 + (ipv4[idx] - '0'); /* compute the octet */
-		}
+		octet = strtoul(ptr, NULL, 0);
+		addr += octet * cluster;
+		cluster >>= 8;
+		ptr = strtok(NULL, ".");
 	}
-
-	/* add the last octet to addr */
-	addr = addr + octet * cluster;
 
 	return addr;
 }
 
 void
-uint_to_ipv4(unsigned addr, char ipv4[])
+inet_ntoa(unsigned addr, char ipv4[])
 {
-	unsigned divisor = 1 << 24; /* the divisor for our addr */
+	unsigned divisor = 1 << 24; /* the divisor for addr */
 	unsigned char octet; /* the computed octet */
 	unsigned char offset = 0; /* this is for sprintf's 1st arg */
 
-	while (addr > 0) /* while we still can divide addr, do... */
+	while (addr > 0) /* while addr is positive..., do */
 	{
 		octet = addr / divisor; /* compute the octet */
 		/* put the octet into array, then add sprintf's retval to offset */
 		offset += sprintf(ipv4 + offset, "%u", octet);
 		ipv4[offset] = '.'; /* put a dot on the array */
-		++offset;
+		++offset; /* increment the offset as we already added a dot */
 		addr -= octet * divisor; /* subtract (octet * divisor) from addr */
-		divisor /= 1 << 8; /* divide the divisor by 2^8 */
+		divisor >>= 8; /* shift the divisor bit 8 bits to the right */
 	}
 
 	ipv4[offset - 1] = '\0'; /* replace the last dot with a null terminator */
@@ -92,12 +87,12 @@ main(int argc, char *argv[])
 	if (tolower(argv[1][0]) == 'i')
 	{
 		strncat(ipv4, argv[2], IPV4ARRSZ - 1);
-		printf("%u\n", ipv4_to_uint(ipv4));
+		printf("%u\n", inet_aton(ipv4));
 	}
 	else if (tolower(argv[1][0]) == 's')
 	{
 		addr = strtoul(argv[2], NULL, 0);
-		uint_to_ipv4(addr, ipv4);
+		inet_ntoa(addr, ipv4);
 		printf("%s\n", ipv4);
 	}
 	else
